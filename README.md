@@ -13,6 +13,7 @@ The multi-domain facial landmark dataset is available for download:
 ### Citation
 If you use this dataset or find our work useful, please consider citing our paper:
 
+```plaintext
 @inproceedings{li2024towards,
   title={Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model},
   author={Li, Yuanming and Kim, Gwantae and Kwak, Jeong-gi and Ku, Bon-hwa and Ko, Hanseok},
