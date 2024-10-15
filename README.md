@@ -12,7 +12,18 @@ In this work, we propose a two-stage training approach that leverages synthetic 
 We created a large multi-domain facial landmark dataset with 25 different styles, each containing 400 images and annotations. The dataset is publicly available in this repository.
 The multi-domain facial landmark dataset is available for download:
 - [Download Dataset from Google Drive] [google drive link](https://drive.google.com/file/d/1taZfY8_IETJG2DkhXxv7U3JpPEokkBb4/view?usp=sharing)
+### Dataset Structure:
+- **Styles**: The dataset includes 25 distinct styles, each representing different visual domains.
+- **Image Resolution**: The images are resized to 256x256 for consistent processing.
+- **Annotations Format**: The 68 landmarks are provided as 2D coordinates (x, y) for each image, indicating the positions of important facial features..
 
+### Example Styles:
+- Caricatures
+- Pixar-style characters
+- Hand-drawn illustrations
+- Artistic portraits
+- ... ...
+  
 ### Citation
 If you use this dataset or find our work useful, please consider citing our paper:
 
