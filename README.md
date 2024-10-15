@@ -1,4 +1,4 @@
-# Multi-Domain Face Landmark Detection with Diffusion Model
+# Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model
 
 This repository contains the synthetic dataset for our ICASSP 2024 paper titled "Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model". [![arXiv](https://img.shields.io/badge/arXiv-2203.00123-red)](https://arxiv.org/abs/2401.13191)
 
