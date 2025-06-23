@@ -22,6 +22,11 @@ cd MDFLD
 ```bash
 pip install -r requirements.txt
 ```
+
+3. Download the pretrained model:
+   - **Cartoon Dataset Model**: [Download here](https://drive.google.com/file/d/1OjZDqkt41HAqAE5mJ586KMj8BUEHC6zn/view?usp=drive_link)
+   - Place the downloaded model at: `./pretrained_model/cartoon_dataset_400_v2/starv2_smoothl1/model/best_model.pkl`
+   - 
 ## Inference Usage
 
 ### Basic Usage
