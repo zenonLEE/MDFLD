@@ -10,6 +10,48 @@ In this work, we propose a two-stage training approach that leverages synthetic 
 
 ![Description of Image](./images/intro.png)
 
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/zenonLEE/MDFLD.git
+cd MDFLD
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+## Inference Usage
+
+### Basic Usage
+
+```bash
+python test.py [OPTIONS]
+```
+
+### Inference Modes
+
+#### 1. Standard Testing (with annotations)
+Test on dataset with ground truth annotations:
+```bash
+python test.py --mode=test \
+               --device_ids=0 \
+               --image_dir=/path/to/images \
+               --annot_dir=/path/to/annotations \
+               --data_definition=WFLW \
+               --pretrained_weight=/path/to/model.pkl
+```
+#### 2. Image-Only Testing (without annotations)
+Test on images without ground truth (inference only):
+```bash
+python test.py --mode=test_image \
+               --device_ids=0 \
+               --image_dir=/path/to/test/images \
+               --pretrained_weight=/path/to/model.pkl \
+               --data_definition=video_me_pixar_d_0.5_80
+```
+
 ## Dataset
 We created a large multi-domain facial landmark dataset with 25 different styles, each containing 400 images and annotations. The dataset is publicly available in this repository.
 The multi-domain facial landmark dataset is available for download:
@@ -25,7 +67,8 @@ The multi-domain facial landmark dataset is available for download:
 - Hand-drawn illustrations
 - Artistic portraits
 - ... ...
-  
+
+
 ### Citation
 If you use this dataset or find our work useful, please consider citing our paper:
 
