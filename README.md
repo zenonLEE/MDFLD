@@ -57,7 +57,6 @@ python test.py --mode=test_image \
                --device_ids=0 \
                --image_dir=/path/to/test/images \
                --pretrained_weight=/path/to/model.pkl \
-               --data_definition=video_me_pixar_d_0.5_80
 ```
 
 ## Dataset
