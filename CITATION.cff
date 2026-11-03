@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this code, the synthetic dataset or the models, please cite the paper below."
+title: "MDFLD: Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model"
+repository-code: "https://github.com/zenonLEE/MDFLD"
+url: "https://arxiv.org/abs/2401.13191"
+authors:
+  - given-names: Yuanming
+    family-names: Li
+  - given-names: Gwantae
+    family-names: Kim
+  - given-names: Jeong-gi
+    family-names: Kwak
+  - given-names: Bon-hwa
+    family-names: Ku
+  - given-names: Hanseok
+    family-names: Ko
+preferred-citation:
+  type: conference-paper
+  title: "Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model"
+  authors:
+    - given-names: Yuanming
+      family-names: Li
+    - given-names: Gwantae
+      family-names: Kim
+    - given-names: Jeong-gi
+      family-names: Kwak
+    - given-names: Bon-hwa
+      family-names: Ku
+    - given-names: Hanseok
+      family-names: Ko
+  collection-title: "ICASSP 2024 - 2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)"
+  start: 6730
+  end: 6734
+  year: 2024
+  url: "https://arxiv.org/abs/2401.13191"
