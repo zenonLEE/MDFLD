@@ -5,6 +5,7 @@ This repository contains the synthetic dataset for our ICASSP 2024 paper titled 
 ## News
 
 - **2026-11: cartoon model v2.** A fine-tuned checkpoint for cartoon and caricature faces. On the CariFace caricature test set it is more accurate than v1, especially for the eyes, mouth and nose. Download [`mdfld_cartoon_v2.pkl`](https://github.com/zenonLEE/MDFLD/releases/download/v2.0/mdfld_cartoon_v2.pkl) (65.8 MiB) from the [v2.0 release](https://github.com/zenonLEE/MDFLD/releases/tag/v2.0). For inference it is a drop-in replacement for the v1 model: pass it with `--pretrained_weight`. See [Cartoon model v2](#cartoon-model-v2).
+- **2026-11: eyelid contours (v2.1).** `eyelid/eyelid_sam31.py` turns v2 landmarks into smooth upper and lower eyelid curves without the lash band, using SAM 3.1 text prompts. It needs no training and adds no new weights. See [Eyelid contours](#eyelid-contours-v21).
 
 ## Introduction
 
@@ -111,6 +112,61 @@ If you use v2, please also cite the datasets it was trained on: CariFace (Cai, G
 ### Terms of use
 
 The v2 weights are for research use only and come without warranty. They were trained on third-party data: CariFace is released for research purposes only, and iCartoonFace, anime-faces-256 and pixar-images contain third-party cartoon artwork and film frames (the two Hugging Face sets state no license). Please follow each dataset's terms.
+
+## Eyelid contours (v2.1)
+
+The 68-point layout gives each eye only six points, so the lid curve between them is interpolated (see [Limitations](#limitations)). `eyelid/eyelid_sam31.py` turns v2 landmarks into dense upper and lower eyelid curves without the lash band. It needs no training and does not change the v2 weights.
+
+![Eyelid contour pipeline](eyelid/pipeline.png)
+
+For each eye, the landmarks give the crop, the scale (eye width) and the corner positions. [SAM 3.1](https://github.com/facebookresearch/sam3) is asked for four text prompts ("eye", "eyelid", "white of the eye", "pupil") on five slightly shifted single-eye crops, and the masks are averaged. On cartoons "eyelid" returns the lash band or eyeliner, so the eyeball is the eye minus the eyelid, keeping eye-white pixels. The contour is split into the upper and lower lid, snapped to the edge of the eye white and fitted with a robust smoothing spline; round eye ends are fitted through, so the two lids meet smoothly. An eye corner is moved to the landmark corner only when SAM stops short of it, which is typical for realistic faces, where SAM covers just the visible eye white.
+
+### Results
+
+17 in-house stills at 1404 × 1404 (14 cartoon characters and 3 realistic faces, 34 eyes), none of them used to train v2. There is no pixel ground truth, so the table reports medians of two proxies:
+
+- **Lash band inside**: the share of SAM's "eyelid" mask that falls inside the contour; lower is better. It is computed on the 25 cartoon eyes where SAM found an eyelid mask.
+- **Roughness**: the RMS distance between the closed contour, resampled every 0.5 px, and a copy of it smoothed with a Gaussian of σ = 2.5 px; lower is smoother.
+
+| Contour | Lash band inside, cartoon | Roughness (px), cartoon | Roughness (px), realistic |
+|---|---|---|---|
+| SAM 3.1 "eye" on the face crop | 0.22 | 0.24 | 0.32 |
+| v2 landmarks, interpolated | 0.09 | 0.17 | 0.28 |
+| v2 + `eyelid_sam31.py` | **0.02** | **0.10** | 0.29 |
+
+- The lash-band share uses SAM's own mask, so it favours the tool. A measure that does not depend on SAM also improves on cartoon eyes: the mean image gradient along the contour, divided by the 95th-percentile gradient around the eye, is 1.60 against 1.08 for the interpolated landmark curve.
+- Part of the roughness of a mask outline is pixel steps: a perfect ellipse of eye size, drawn into pixels, already scores 0.20–0.27 px.
+- On realistic faces the curves are close to the landmark curves (median of the per-eye mean distance 1.1 px, at most 1.4 px), and all 12 realistic eye corners end at the landmark corners. 55 of the 56 cartoon corners come from SAM's eyeball outline.
+
+### Usage
+
+1. Set up a separate environment with a CUDA GPU: this repository's `requirements.txt` pins old versions, while SAM 3 needs a recent PyTorch. Install SAM 3 as described in [facebookresearch/sam3](https://github.com/facebookresearch/sam3) (tested at commit `f1647e8`), then `pip install opencv-python scipy pillow`.
+2. Download `sam3.1_multiplex.pt` from [facebook/sam3.1](https://huggingface.co/facebook/sam3.1). Access is gated: request it on that page and accept the SAM License.
+3. Get 68 landmarks for each face (iBUG order, 0-based), for example with v2. They must be in pixels of the full image as it is stored (the tool reads images with PIL and does not apply EXIF rotation). Save them as a text file with 68 lines of `x y`, a `(68, 2)` `.npy` file or a JSON list.
+4. Run:
+
+```bash
+python eyelid/eyelid_sam31.py --sam3-ckpt sam3.1_multiplex.pt \
+    --image face.png --landmarks face_68.txt --out face_eyelids.json --vis face_eyelids.png
+```
+
+For many images, pass `--batch landmarks.json --image-root images/` instead of `--image` and `--landmarks`. The JSON maps each image path (relative to `--image-root`) to its 68 points; with `--batch`, `--vis` is a folder.
+
+The output maps each image to `{"L": {...}, "R": {...}}` for the image-left and image-right eye. Each eye has:
+
+- `upper` and `lower`: 60 points each, in image pixels, ordered from the image-left corner to the image-right corner;
+- `landmark_corners`: which ends (`"L"` = image-left, `"R"` = image-right) were moved to the landmark corner;
+- `blunt_ends`: which ends were fitted through as round ends.
+
+An eye is `null` when SAM found no eye on the landmarks. In batch mode an image that fails is recorded as `{"error": "..."}` and the run continues.
+
+### Notes
+
+- Speed: SAM 3.1 runs 5 crops × 4 prompts per eye, about 4 s per image on one NVIDIA RTX PRO 6000 (69 s for the 17 stills, plus about 14 s to load the model). The other steps take about 40 ms per eye on the CPU.
+- The thresholds were set on these 34 eyes, whose eye widths are 60–170 px. If a face's mean eye width is outside 60–180 px, the tool crops the face and rescales it so that the eye width becomes 100 px (small eyes) or 120 px (large eyes), then maps the curves back. `--no-rescale` turns this off. The rescaling has only had a quick check: on two images shrunk until the eyes were 33–48 px wide, the curves stayed within about 4 px (at the original resolution) of the full-resolution result, but corner decisions can change.
+- Where SAM's "pupil" covers the whole iris (black irises, realistic eyes), removing highlights near the pupil also removes a thin ring of eye white, which can move the curve by up to about 3 px.
+- If the landmarks put an eye in the wrong place, the tool picks the wrong SAM instance.
+- SAM 3.1 is not part of this repository; its code and weights are under Meta's SAM License.
 
 ## Dataset
 We created a large multi-domain facial landmark dataset with 25 different styles, each containing 400 images and annotations. The dataset is publicly available in this repository.
