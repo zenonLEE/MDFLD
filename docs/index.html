@@ -185,14 +185,6 @@ mdfld video clip.mp4 --out clip.json --vis clip_mdfld.mp4</code></pre>
     <p class="note">Both models with the crops of the <code>mdfld</code> package. On 313 held-out real-face video frames (automatic labels), v2 reaches 1.74% (v1: 3.03%). See the <a href="https://github.com/zenonLEE/MDFLD#cartoon-model-v2">README</a> for other crops, the protocol and the limitations.</p>
   </section>
 
-  <section>
-    <h2>Eyelid curves</h2>
-    <p>The 68-point layout gives each eye only six points. For each eye, the landmarks give the crop, the scale and the corners; SAM 3.1 is asked for "eye", "eyelid", "white of the eye" and "pupil" on five shifted crops, and the eyeball (eye minus eyelid) is fitted with a robust spline.</p>
-    <figure>
-      <img class="plain" src="assets/eyelid_pipeline.png" alt="Eyelid curve pipeline: MDFLD v2 landmarks, single-eye crops, SAM 3.1 prompts, mask averaging, lash removal, lid split, corner fusion and spline fit">
-    </figure>
-  </section>
-
   <section id="bibtex">
     <h2>BibTeX</h2>
     <div class="bib">
