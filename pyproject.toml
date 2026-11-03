@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mdfld"
+version = "2.0.0"
+description = "Multi-domain face landmarks (68 points) and lash-free eyelid curves for images and videos (MDFLD, ICASSP 2024)"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"   # sam3 @ f1647e8 pins numpy<2, which has no wheels for Python 3.13+
+authors = [{ name = "Yuanming Li" }]
+keywords = ["facial landmarks", "face alignment", "cartoon", "caricature", "eyelid", "segment anything"]
+dependencies = [
+    "torch>=2.4",
+    "numpy",
+    "scipy",
+    "opencv-python-headless",
+    "pillow",
+]
+
+[project.optional-dependencies]
+sam = [
+    "sam3 @ https://github.com/facebookresearch/sam3/archive/f1647e8d0c1d280991f4d1b7d974c2704537fe66.zip",
+    "huggingface_hub",
+    # used by sam3 @ f1647e8 but not declared in its own dependencies
+    "einops",
+    "pycocotools",
+    "psutil",
+    "setuptools<81",   # sam3 imports pkg_resources
+]
+
+[project.urls]
+Homepage = "https://github.com/zenonLEE/MDFLD"
+Paper = "https://arxiv.org/abs/2401.13191"
+
+[project.scripts]
+mdfld = "mdfld.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["mdfld*"]
