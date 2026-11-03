@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model (MDFLD, ICASSP 2024)</title>
+<meta name="description" content="MDFLD: 68-point face landmark detection on photos, paintings, caricatures and cartoons, trained with synthetic data from a diffusion model (ICASSP 2024). Code, synthetic dataset, cartoon model v2, eyelid curves and a pip package.">
+<link rel="canonical" href="https://zenonlee.github.io/MDFLD/">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model">
+<meta property="og:description" content="68 face landmarks and eyelid curves on photos, paintings, caricatures and cartoons. ICASSP 2024.">
+<meta property="og:url" content="https://zenonlee.github.io/MDFLD/">
+<meta property="og:image" content="https://zenonlee.github.io/MDFLD/assets/teaser.jpg">
+<meta name="twitter:card" content="summary_large_image">
+
+<meta name="citation_title" content="Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model">
+<meta name="citation_author" content="Li, Yuanming">
+<meta name="citation_author" content="Kim, Gwantae">
+<meta name="citation_author" content="Kwak, Jeong-gi">
+<meta name="citation_author" content="Ku, Bon-hwa">
+<meta name="citation_author" content="Ko, Hanseok">
+<meta name="citation_publication_date" content="2024">
+<meta name="citation_conference_title" content="ICASSP 2024 - 2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)">
+<meta name="citation_firstpage" content="6730">
+<meta name="citation_lastpage" content="6734">
+<meta name="citation_arxiv_id" content="2401.13191">
+<meta name="citation_pdf_url" content="https://arxiv.org/pdf/2401.13191">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ScholarlyArticle",
+  "headline": "Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model",
+  "alternateName": "MDFLD",
+  "author": [
+    {"@type": "Person", "name": "Yuanming Li"},
+    {"@type": "Person", "name": "Gwantae Kim"},
+    {"@type": "Person", "name": "Jeong-gi Kwak"},
+    {"@type": "Person", "name": "Bon-hwa Ku"},
+    {"@type": "Person", "name": "Hanseok Ko"}
+  ],
+  "datePublished": "2024",
+  "isPartOf": {"@type": "PublicationEvent", "name": "ICASSP 2024"},
+  "url": "https://zenonlee.github.io/MDFLD/",
+  "sameAs": ["https://arxiv.org/abs/2401.13191", "https://github.com/zenonLEE/MDFLD"],
+  "image": "https://zenonlee.github.io/MDFLD/assets/teaser.jpg",
+  "keywords": ["face landmark detection", "facial landmarks", "cartoon", "caricature", "diffusion model", "synthetic data", "eyelid"]
+}
+</script>
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1f2328;
+    --muted: #59636e;
+    --line: #d1d9e0;
+    --card: #f6f8fa;
+    --accent: #0969da;
+    --accent-fg: #ffffff;
+    --code-bg: #f6f8fa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1117;
+      --fg: #e6edf3;
+      --muted: #9198a1;
+      --line: #30363d;
+      --card: #151b23;
+      --accent: #4493f8;
+      --accent-fg: #0d1117;
+      --code-bg: #151b23;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d;
+    --card: #151b23; --accent: #4493f8; --accent-fg: #0d1117; --code-bg: #151b23;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 48px 16px 64px; }
+  header { text-align: center; }
+  h1 { font-size: clamp(26px, 4.2vw, 40px); line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.01em; }
+  .venue { color: var(--accent); font-weight: 600; margin: 0 0 14px; }
+  .authors { margin: 0; }
+  .affil { color: var(--muted); margin: 2px 0 22px; }
+  .buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 0 0 28px; }
+  .buttons a {
+    display: inline-block; padding: 8px 16px; border-radius: 999px; text-decoration: none;
+    background: var(--fg); color: var(--bg); font-weight: 600; font-size: 15px;
+  }
+  .buttons a:hover { background: var(--accent); color: var(--accent-fg); }
+  figure { margin: 0 0 8px; }
+  figure img, figure video { width: 100%; height: auto; display: block; border-radius: 10px; border: 1px solid var(--line); background: #000; }
+  figure img.plain { background: #fff; }
+  figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; text-align: center; }
+  section { margin-top: 48px; }
+  h2 { font-size: 26px; margin: 0 0 14px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 19px; margin: 26px 0 8px; }
+  .tldr { font-size: 19px; text-align: center; max-width: 820px; margin: 26px auto 0; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .card b { display: block; margin-bottom: 4px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px;
+    overflow-x: auto; font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin: 0;
+  }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  .note { color: var(--muted); font-size: 14px; }
+  .bib { position: relative; }
+  .bib button {
+    position: absolute; top: 8px; right: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+    border-radius: 6px; padding: 4px 10px; font-size: 13px; cursor: pointer;
+  }
+  a { color: var(--accent); }
+  footer { margin-top: 56px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model</h1>
+    <p class="venue">MDFLD · ICASSP 2024</p>
+    <p class="authors">Yuanming Li · Gwantae Kim · Jeong-gi Kwak · Bon-hwa Ku · Hanseok Ko</p>
+    <p class="affil">Korea University</p>
+    <nav class="buttons">
+      <a href="https://arxiv.org/abs/2401.13191">Paper (arXiv)</a>
+      <a href="https://github.com/zenonLEE/MDFLD">Code</a>
+      <a href="https://drive.google.com/file/d/1taZfY8_IETJG2DkhXxv7U3JpPEokkBb4/view?usp=sharing">Dataset</a>
+      <a href="https://github.com/zenonLEE/MDFLD/releases/tag/v2.0">Model v2</a>
+      <a href="#bibtex">BibTeX</a>
+    </nav>
+    <figure>
+      <img src="assets/teaser.jpg" alt="68 landmarks and eyelid curves on a photo, three paintings and four frames of 3D animation">
+      <figcaption>Output of <code>mdfld image</code> with default settings. None of these images was used for training.</figcaption>
+    </figure>
+    <p class="tldr">One landmark detector for photos, paintings, caricatures and cartoons, trained with synthetic faces from a diffusion model.</p>
+  </header>
+
+  <section>
+    <h2>Overview</h2>
+    <p>Facial landmark detection is crucial for applications such as 3D facial reconstruction, face recognition and augmented reality. Current methods work well on real-world images, but detecting landmarks in other domains, such as cartoons or caricatures, remains hard because annotated training data is scarce.</p>
+    <p>We propose a two-stage approach that uses synthetic data from a pre-trained diffusion model. A landmark-conditioned face generator is trained on a large set of real faces, then fine-tuned on a small set of image–landmark pairs with text prompts for each style. It generates paired images and landmarks in 25 styles, which are used to fine-tune an existing landmark detector for multi-domain face landmark detection.</p>
+  </section>
+
+  <section>
+    <h2>What is in the repository</h2>
+    <div class="cards">
+      <div class="card"><b>Synthetic dataset</b><p>25 styles × 400 images at 256 × 256 with 68 landmarks: caricatures, Pixar-style characters, hand-drawn illustrations, artistic portraits and more.</p></div>
+      <div class="card"><b>Cartoon model v2</b><p>Fine-tuned with self-training on cartoon and caricature faces. More accurate than the paper model on the CariFace caricature test set.</p></div>
+      <div class="card"><b>Eyelid curves</b><p>Smooth upper and lower eyelid curves without the lash band, from v2 landmarks and SAM 3.1 text prompts.</p></div>
+      <div class="card"><b>pip package</b><p>An <code>mdfld</code> command and Python API for images and videos, with automatic face finding and temporal smoothing.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Quick start</h2>
+    <pre><code>pip install "mdfld[sam] @ git+https://github.com/zenonLEE/MDFLD"
+
+mdfld image face.png --out face.json --vis face_mdfld.png
+mdfld video clip.mp4 --out clip.json --vis clip_mdfld.mp4</code></pre>
+    <p class="note">Python 3.10–3.12 with a CUDA GPU; install PyTorch 2.4 or newer first. SAM 3.1 weights need <a href="https://huggingface.co/facebook/sam3.1">access on Hugging Face</a>. Details in the <a href="https://github.com/zenonLEE/MDFLD#python-package">README</a>.</p>
+  </section>
+
+  <section>
+    <h2>Cartoon model v2 on caricatures</h2>
+    <p>CariFace test set, 1,560 caricatures. NME in % of the outer eye-corner distance; lower is better.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Model</th><th>All 68</th><th>Eyes</th><th>Mouth</th><th>Nose</th><th>Eyebrows</th><th>Jaw</th></tr></thead>
+        <tbody>
+          <tr><td>v1 (paper)</td><td>6.70</td><td>3.49</td><td>6.29</td><td>4.81</td><td>6.77</td><td>10.42</td></tr>
+          <tr><td><b>v2</b></td><td><b>5.03</b></td><td><b>2.78</b></td><td><b>4.62</b></td><td><b>3.80</b></td><td><b>5.01</b></td><td><b>7.75</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Both models with the crops of the <code>mdfld</code> package. On 313 held-out real-face video frames (automatic labels), v2 reaches 1.74% (v1: 3.03%). See the <a href="https://github.com/zenonLEE/MDFLD#cartoon-model-v2">README</a> for other crops, the protocol and the limitations.</p>
+  </section>
+
+  <section>
+    <h2>Eyelid curves</h2>
+    <p>The 68-point layout gives each eye only six points. For each eye, the landmarks give the crop, the scale and the corners; SAM 3.1 is asked for "eye", "eyelid", "white of the eye" and "pupil" on five shifted crops, and the eyeball (eye minus eyelid) is fitted with a robust spline.</p>
+    <figure>
+      <img class="plain" src="assets/eyelid_pipeline.png" alt="Eyelid curve pipeline: MDFLD v2 landmarks, single-eye crops, SAM 3.1 prompts, mask averaging, lash removal, lid split, corner fusion and spline fit">
+    </figure>
+  </section>
+
+  <section id="bibtex">
+    <h2>BibTeX</h2>
+    <div class="bib">
+      <button type="button" id="copy">Copy</button>
+      <pre><code id="bibtext">@inproceedings{li2024towards,
+  title={Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model},
+  author={Li, Yuanming and Kim, Gwantae and Kwak, Jeong-gi and Ku, Bon-hwa and Ko, Hanseok},
+  booktitle={ICASSP 2024-2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  pages={6730--6734},
+  year={2024},
+  organization={IEEE}
+}</code></pre>
+    </div>
+  </section>
+
+  <footer>
+    <p>Images: public-domain works from Wikimedia Commons (Mae Jemison, NASA portrait; Leonardo da Vinci, <i>Mona Lisa</i>; Vincent van Gogh, <i>Self-Portrait</i>; Johannes Vermeer, <i>Girl with a Pearl Earring</i>) and frames of <i>Sintel</i>, © copyright Blender Foundation | <a href="https://durian.blender.org">durian.blender.org</a>, CC BY 3.0. Eyelid curves and face finding use <a href="https://github.com/facebookresearch/sam3">SAM 3.1</a>; the landmark network follows <a href="https://github.com/ZhenglinZhou/STAR">STAR</a>.</p>
+  </footer>
+</main>
+<script>
+  document.getElementById('copy').addEventListener('click', function () {
+    var b = this, t = document.getElementById('bibtext').textContent;
+    try {
+      navigator.clipboard.writeText(t).then(function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); });
+    } catch (e) { /* clipboard not available */ }
+  });
+</script>
+</body>
+</html>
