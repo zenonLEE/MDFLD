@@ -17,6 +17,12 @@ MODES = {                         # SAM backend, single-eye crops per eye; times
     'fast': ('image', E.JIT[:3]),  # 3 crops per eye: about 1.9 s
 }
 CORNERS = {'L': (36, 39), 'R': (42, 45)}
+EYE = {'L': list(range(36, 42)), 'R': list(range(42, 48))}
+# Sanity bounds for a SAM eyelid curve in the eye's corner frame (unit = corner distance): width, centre along the corner
+# axis, offset of the mean height from the eye landmarks, and height relative to the landmark eye height. The curves of
+# the 34 eyes the method was developed on fall well inside (0.87-1.00, 0.46-0.53, within 0.03, up to 1.26); outside,
+# SAM has usually outlined only the iris, or the brow or the whole eye socket.
+PLAUSIBLE = dict(width=(0.75, 1.35), centre=(0.35, 0.65), offset=0.15, height=1.8)
 
 
 def _round(a):
@@ -26,6 +32,30 @@ def _round(a):
 def landmark_curves(lm, e):
     """Lid curves interpolated through the 6 eye landmarks (60 points each), used when SAM finds no eye."""
     return {k: E.sample(E.catmull_rom(np.asarray(lm)[E.IBUG[e][k]]), np.linspace(0, 1, 60)) for k in ('upper', 'lower')}
+
+
+def plausible(lm, e, lid):
+    """Whether a SAM eyelid curve agrees with the eye landmarks (see PLAUSIBLE)."""
+    o, R, s = _eye_frame(lm, e)
+    q = (np.vstack([lid['upper'], lid['lower']]) - o) @ R / s
+    eye = (np.asarray(lm, np.float64)[EYE[e]] - o) @ R / s
+    lo, hi = q[:, 0].min(), q[:, 0].max()
+    return (PLAUSIBLE['width'][0] <= hi - lo <= PLAUSIBLE['width'][1]
+            and PLAUSIBLE['centre'][0] <= (hi + lo) / 2 <= PLAUSIBLE['centre'][1]
+            and abs(q[:, 1].mean() - eye[:, 1].mean()) <= PLAUSIBLE['offset']
+            and np.ptp(q[:, 1]) <= PLAUSIBLE['height'] * max(np.ptp(eye[:, 1]), 0.05))
+
+
+def _checked(lm, got):
+    """SAM curves that pass the sanity check (source "sam"); other eyes get the landmark curves (source "landmarks")."""
+    out = {}
+    for e in 'LR':
+        v = got.get(e)
+        if v and plausible(lm, e, v):
+            out[e] = dict(v, source='sam')
+        else:
+            out[e] = dict(landmark_curves(lm, e), source='landmarks', landmark_corners=['L', 'R'], blunt_ends=[])
+    return out
 
 
 def _iou(a, b):
@@ -88,8 +118,10 @@ class MDFLD:
         return find_faces(self.finder, load_rgb(image))
 
     def eyelids(self, image, landmarks):
-        """Eyelid curves for one face with known landmarks."""
-        return E.eyelids(self.eye_sam, load_rgb(image), E.to68(landmarks), jitters=self.jitters)
+        """Eyelid curves for one face with known landmarks. An eye that SAM misses, or whose curve fails the sanity
+        check, gets the curves through its 6 landmarks; each eye's "source" says which ("sam" or "landmarks")."""
+        lm = E.to68(landmarks)
+        return _checked(lm, E.eyelids(self.eye_sam, load_rgb(image), lm, jitters=self.jitters))
 
     def image(self, image, face_box=None, landmarks=None):
         """One image (path, PIL image or RGB array; files are turned upright by their EXIF orientation).
@@ -107,14 +139,13 @@ class MDFLD:
         return {'face_box': _round(face_box), 'landmarks': _round(lm), 'eyelids': _pack(lids)}
 
     def _lids(self, rgb, lm):
-        """Eyelids for one frame; an eye SAM misses (or an error) falls back to the landmark curve."""
+        """Eyelids for one video frame, as eyelids(); an error also falls back to the landmark curves."""
         try:
             got = E.eyelids(self.eye_sam, rgb, lm, jitters=self.jitters)
         except Exception as ex:                                               # keep the video going
             warnings.warn(f'eyelids failed on a frame ({type(ex).__name__}: {ex}); using the landmark curves')
             got = {'L': None, 'R': None}
-        return {e: dict(got[e], source='sam') if got[e] else dict({k: v.tolist() for k, v in landmark_curves(lm, e).items()}, source='landmarks')
-                for e in 'LR'}
+        return _checked(lm, got)
 
     def video(self, path, every=1, smooth=True, min_cutoff=1.0, beta=5.0, d_cutoff=2.0, vis=None, max_frames=None, verbose=True):
         """A video file. Every frame is processed like an image: the face is found with SAM (the one that overlaps the
