@@ -138,19 +138,7 @@ Research use only, without warranty. The training data includes research-only (C
 
 ## Eyelid contours (v2.1)
 
-Dense upper and lower eyelid curves without the lash band, from v2 landmarks and SAM 3.1 text prompts ("eye", "eyelid", "white of the eye", "pupil") on five shifted crops per eye. No training needed.
-
-<p align="center"><img src="eyelid/pipeline.png" width="90%" alt="Eyelid contour pipeline"></p>
-
-On 34 in-house eyes (14 cartoon characters, 3 realistic faces; medians, lower is better):
-
-| Contour | Lash band inside (cartoon) | Roughness, cartoon (px) | Roughness, realistic (px) |
-|---|---|---|---|
-| SAM 3.1 "eye" on the face crop | 0.22 | 0.24 | 0.32 |
-| v2 landmarks, interpolated | 0.09 | 0.17 | 0.28 |
-| v2 + eyelid step | **0.02** | **0.10** | 0.29 |
-
-The pip package runs this step and falls back to the landmark curves when SAM's curve disagrees with the landmarks (for example on oil paintings with dark eye whites, or eyes behind glasses).
+Dense upper and lower eyelid curves without the lash band, computed from the v2 landmarks with SAM 3.1. No training needed. The pip package runs this step and falls back to the landmark curves when SAM's curve disagrees with the landmarks (for example on oil paintings with dark eye whites, or eyes behind glasses).
 
 <details>
 <summary>Stand-alone script</summary>
