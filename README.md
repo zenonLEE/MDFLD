@@ -10,6 +10,7 @@ Korea University
 [![arXiv](https://img.shields.io/badge/arXiv-2401.13191-b31b1b.svg)](https://arxiv.org/abs/2401.13191)
 [![ICASSP 2024](https://img.shields.io/badge/ICASSP-2024-1f6feb.svg)](https://arxiv.org/abs/2401.13191)
 [![Project page](https://img.shields.io/badge/Project-page-8957e5.svg)](https://zenonlee.github.io/MDFLD/)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-model-ffd21e.svg)](https://huggingface.co/zenonlee/MDFLD)
 [![Python](https://img.shields.io/badge/python-3.10%E2%80%933.12-3776ab.svg)](#quick-start)
 [![Release](https://img.shields.io/github/v/release/zenonLEE/MDFLD?color=2ea44f)](https://github.com/zenonLEE/MDFLD/releases)
 [![Stars](https://img.shields.io/github/stars/zenonLEE/MDFLD?style=social)](https://github.com/zenonLEE/MDFLD)
@@ -76,7 +77,7 @@ Times for a 1404 × 1404 image on one NVIDIA RTX PRO 6000; differences on 28 car
 
 ## Cartoon model v2
 
-The paper model (v1) fine-tuned with self-training on cartoon and caricature faces. Download from the [v2.0 release](https://github.com/zenonLEE/MDFLD/releases/tag/v2.0): `mdfld_cartoon_v2.torchscript.pt` (used by the package) or `mdfld_cartoon_v2.pkl` (for the [original code](#paper-model-v1-and-the-original-code)).
+The paper model (v1) fine-tuned with self-training on cartoon and caricature faces. Download from the [v2.0 release](https://github.com/zenonLEE/MDFLD/releases/tag/v2.0): `mdfld_cartoon_v2.torchscript.pt` (used by the package; also on [Hugging Face](https://huggingface.co/zenonlee/MDFLD)) or `mdfld_cartoon_v2.pkl` (for the [original code](#paper-model-v1-and-the-original-code)).
 
 ### Results
 
