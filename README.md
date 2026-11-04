@@ -2,7 +2,7 @@
 
 # Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model
 
-**MDFLD** · ICASSP 2024
+**MDFLD** · Cartoon face landmark detection · ICASSP 2024
 
 Yuanming Li · Gwantae Kim · Jeong-gi Kwak · Bon-hwa Ku · Hanseok Ko<br>
 Korea University
@@ -23,6 +23,7 @@ Korea University
 
 </div>
 
+MDFLD is a 68-point face landmark detector for cartoons, caricatures, paintings and photos, trained with synthetic faces from a diffusion model. It comes as a pip package for images and videos.
 
 ## News
 
