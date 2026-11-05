@@ -8,7 +8,7 @@ Yuanming Li · Gwantae Kim · Jeong-gi Kwak · Bon-hwa Ku · Hanseok Ko<br>
 Korea University
 
 [![arXiv](https://img.shields.io/badge/arXiv-2401.13191-b31b1b.svg)](https://arxiv.org/abs/2401.13191)
-[![ICASSP 2024](https://img.shields.io/badge/ICASSP-2024-1f6feb.svg)](https://arxiv.org/abs/2401.13191)
+[![ICASSP 2024](https://img.shields.io/badge/ICASSP-2024-1f6feb.svg)](https://doi.org/10.1109/ICASSP48485.2024.10446497)
 [![Project page](https://img.shields.io/badge/Project-page-8957e5.svg)](https://zenonlee.github.io/MDFLD/)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-model-ffd21e.svg)](https://huggingface.co/zenonlee/MDFLD)
 [![Python](https://img.shields.io/badge/python-3.10%E2%80%933.12-3776ab.svg)](#quick-start)
@@ -24,6 +24,14 @@ Korea University
 </div>
 
 MDFLD is a 68-point face landmark detector for cartoons, caricatures, paintings and photos, trained with synthetic faces from a diffusion model. It comes as a pip package for images and videos.
+
+## Paper and later releases
+
+The **ICASSP 2024 paper** introduces a two-stage, landmark-conditioned diffusion approach for generating paired face images and landmarks across domains, then uses the synthetic data to fine-tune a STAR landmark detector. The released synthetic dataset covers **25 styles × 400 images (10,000 image–landmark pairs)**.
+
+**[Published paper / DOI](https://doi.org/10.1109/ICASSP48485.2024.10446497)** · **[Open-access preprint](https://arxiv.org/abs/2401.13191)** · **[Paper results, Table 1](https://arxiv.org/html/2401.13191v1#S4.T1)** · **[Download BibTeX](https://zenonlee.github.io/MDFLD/citation.bib)**
+
+The **2026 releases** add the cartoon model v2, SAM 3.1 eyelid contours and the image/video Python package. These additions were not part of the 2024 paper. The v2 results below use a different evaluation protocol and should not be cited as the paper's original results.
 
 ## News
 
@@ -69,7 +77,7 @@ Times for a 1404 × 1404 image on one NVIDIA RTX PRO 6000; differences on 28 car
 <summary>Details</summary>
 
 - **Install.** Install PyTorch and torchvision for your CUDA version before `mdfld`, so pip does not replace them. The landmark model is cached in `~/.cache/mdfld` (or `$MDFLD_HOME`); `MDFLD_SAM3_CKPT` can point to a local SAM 3.1 checkpoint.
-- **Without SAM or a GPU**, landmarks still work with a given face box: `mdfld image face.png --box 120,80,620,640 --no-eyelids`.
+- **Without SAM or a GPU**, landmarks still work with a given face box: `mdfld image face.png --box 120,80,620,640 --device cpu --no-eyelids --out face.json`.
 - **Output.** One face per image or frame. `landmarks`: 68 points, iBUG 300-W order, pixels of the upright image (EXIF orientation applied); arrays passed to the API are RGB. `eyelids`: `L` and `R` eyes with 60-point `upper` and `lower` curves and a `source`: `sam`, or `landmarks` when SAM found no eye or its curve disagreed with the eye landmarks (then the curves pass through the 6 eye landmarks).
 - **Landmarks** use three passes: the face box, then twice 1.1 × the previous points' box.
 - **Video.** The face is tracked across frames and each shot is smoothed with a forward–backward [One Euro filter](https://gery.casiez.net/1euro/) (no lag; tune with `--min-cutoff` and `--beta`, or `--no-smooth`). `--every N` runs SAM for the eyelids every N frames and interpolates in between (`source: interpolated`). About 1.2 s per frame with `--mode fast`, 0.5 s with `--every 3`.
@@ -199,6 +207,7 @@ For 68-point models, use any `--data_definition` except `WFLW` and `COFW`, which
   booktitle={ICASSP 2024-2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
   pages={6730--6734},
   year={2024},
+  doi={10.1109/ICASSP48485.2024.10446497},
   organization={IEEE}
 }
 ```

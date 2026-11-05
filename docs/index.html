@@ -9,7 +9,7 @@
 <meta name="google-site-verification" content="hBg1PWsze17kiuWnogLCKJeVhr338-nZvPYjhwT9lzg">
 
 <meta property="og:type" content="website">
-<meta property="og:title" content="Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model">
+<meta property="og:title" content="MDFLD: Cartoon Face Landmark Detection (ICASSP 2024)">
 <meta property="og:description" content="Cartoon face landmark detection: 68 landmarks and eyelid curves on cartoons, caricatures, paintings and photos. ICASSP 2024.">
 <meta property="og:url" content="https://zenonlee.github.io/MDFLD/">
 <meta property="og:image" content="https://zenonlee.github.io/MDFLD/assets/teaser.jpg">
@@ -26,12 +26,16 @@
 <meta name="citation_firstpage" content="6730">
 <meta name="citation_lastpage" content="6734">
 <meta name="citation_arxiv_id" content="2401.13191">
-<meta name="citation_pdf_url" content="https://arxiv.org/pdf/2401.13191">
+<meta name="citation_doi" content="10.1109/ICASSP48485.2024.10446497">
+<link rel="alternate" type="application/x-bibtex" href="citation.bib" title="MDFLD paper citation">
 
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
+  "@graph": [
+  {
   "@type": "ScholarlyArticle",
+  "@id": "https://zenonlee.github.io/MDFLD/#paper",
   "headline": "Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model",
   "alternateName": "MDFLD",
   "author": [
@@ -42,11 +46,37 @@
     {"@type": "Person", "name": "Hanseok Ko"}
   ],
   "datePublished": "2024",
-  "isPartOf": {"@type": "PublicationEvent", "name": "ICASSP 2024"},
+  "isPartOf": {"@type": "CreativeWork", "name": "ICASSP 2024 - 2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)"},
+  "pageStart": "6730",
+  "pageEnd": "6734",
+  "identifier": {"@type": "PropertyValue", "propertyID": "DOI", "value": "10.1109/ICASSP48485.2024.10446497"},
   "url": "https://zenonlee.github.io/MDFLD/",
-  "sameAs": ["https://arxiv.org/abs/2401.13191", "https://github.com/zenonLEE/MDFLD", "https://huggingface.co/zenonlee/MDFLD"],
+  "sameAs": ["https://arxiv.org/abs/2401.13191", "https://doi.org/10.1109/ICASSP48485.2024.10446497"],
   "image": "https://zenonlee.github.io/MDFLD/assets/teaser.jpg",
-  "keywords": ["cartoon face landmark detection", "caricature face landmark detection", "face landmark detection", "facial landmarks", "cartoon", "caricature", "diffusion model", "synthetic data", "eyelid"]
+  "keywords": ["cartoon face landmark detection", "caricature face landmark detection", "face landmark detection", "facial landmarks", "diffusion model", "synthetic data"]
+  },
+  {
+    "@type": "Dataset",
+    "@id": "https://zenonlee.github.io/MDFLD/#dataset",
+    "name": "MDFLD synthetic multi-domain face landmark dataset",
+    "description": "10,000 synthetic face image-landmark pairs in 25 styles, with 400 images per style, 256 x 256 resolution and 68 two-dimensional facial landmarks per image.",
+    "url": "https://zenonlee.github.io/MDFLD/#dataset",
+    "sameAs": "https://drive.google.com/file/d/1taZfY8_IETJG2DkhXxv7U3JpPEokkBb4/view",
+    "isBasedOn": {"@id": "https://zenonlee.github.io/MDFLD/#paper"},
+    "citation": "https://doi.org/10.1109/ICASSP48485.2024.10446497",
+    "keywords": ["facial landmarks", "synthetic data", "cartoon", "caricature", "diffusion model"]
+  },
+  {
+    "@type": "SoftwareSourceCode",
+    "@id": "https://zenonlee.github.io/MDFLD/#software",
+    "name": "MDFLD image and video face landmark package",
+    "description": "Python package for 68-point face landmark detection with the cartoon model v2, optional SAM 3.1 eyelid curves and temporal smoothing for video.",
+    "codeRepository": "https://github.com/zenonLEE/MDFLD",
+    "url": "https://github.com/zenonLEE/MDFLD#python-package",
+    "programmingLanguage": "Python",
+    "isBasedOn": {"@id": "https://zenonlee.github.io/MDFLD/#paper"}
+  }
+  ]
 }
 </script>
 
@@ -133,6 +163,7 @@
     <p class="affil">Korea University</p>
     <nav class="buttons">
       <a href="https://arxiv.org/abs/2401.13191">Paper (arXiv)</a>
+      <a href="https://doi.org/10.1109/ICASSP48485.2024.10446497">Published paper</a>
       <a href="https://github.com/zenonLEE/MDFLD">Code</a>
       <a href="https://drive.google.com/file/d/1taZfY8_IETJG2DkhXxv7U3JpPEokkBb4/view?usp=sharing">Dataset</a>
       <a href="https://github.com/zenonLEE/MDFLD/releases/tag/v2.0">Model v2</a>
@@ -146,14 +177,28 @@
     <p class="tldr">One landmark detector for photos, paintings, caricatures and cartoons, trained with synthetic faces from a diffusion model.</p>
   </header>
 
-  <section>
+  <section id="paper">
     <h2>Overview</h2>
     <p>Facial landmark detection is crucial for applications such as 3D facial reconstruction, face recognition and augmented reality. Current methods work well on real-world images, but detecting landmarks in other domains, such as cartoons or caricatures, remains hard because annotated training data is scarce.</p>
     <p>We propose a two-stage approach that uses synthetic data from a pre-trained diffusion model. A landmark-conditioned face generator is trained on a large set of real faces, then fine-tuned on a small set of image–landmark pairs with text prompts for each style. It generates paired images and landmarks in 25 styles, which are used to fine-tune an existing landmark detector for multi-domain face landmark detection.</p>
+    <h3>ICASSP 2024 paper results</h3>
+    <div class="table-wrap">
+      <table>
+        <caption>Original paper results, as reported in Table 1.</caption>
+        <thead><tr><th>Test dataset</th><th>Paper NME ↓</th></tr></thead>
+        <tbody>
+          <tr><td>ArtFace</td><td>4.64</td></tr>
+          <tr><td>CariFace</td><td>5.54</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">On ArtFace, the method improves over the compared baselines. On CariFace, the specialist method reports a lower NME (4.54). See <a href="https://arxiv.org/html/2401.13191v1#S4.T1">Table 1 and the discussion</a> for the comparisons. The v2 results below use a different protocol and are not directly comparable with this table.</p>
+    <p><a href="https://doi.org/10.1109/ICASSP48485.2024.10446497">DOI: 10.1109/ICASSP48485.2024.10446497</a> · <a href="https://arxiv.org/pdf/2401.13191">Read the open-access PDF on arXiv</a></p>
   </section>
 
-  <section>
+  <section id="software">
     <h2>What is in the repository</h2>
+    <p>The 2024 paper contributes the diffusion-based data-generation method and synthetic dataset. The cartoon model v2, SAM 3.1 eyelid contours and image/video package are later releases from 2026.</p>
     <div class="cards">
       <div class="card"><b>Synthetic dataset</b><p>25 styles × 400 images at 256 × 256 with 68 landmarks: caricatures, Pixar-style characters, hand-drawn illustrations, artistic portraits and more.</p></div>
       <div class="card"><b>Cartoon model v2</b><p>Fine-tuned with self-training on cartoon and caricature faces. More accurate than the paper model on the CariFace caricature test set.</p></div>
@@ -186,6 +231,17 @@ mdfld video clip.mp4 --out clip.json --vis clip_mdfld.mp4</code></pre>
     <p class="note">Both models with the crops of the <code>mdfld</code> package. On 313 held-out real-face video frames (automatic labels), v2 reaches 1.74% (v1: 3.03%). See the <a href="https://github.com/zenonLEE/MDFLD#cartoon-model-v2">README</a> for other crops, the protocol and the limitations.</p>
   </section>
 
+  <section id="dataset">
+    <h2>Synthetic multi-domain face landmark dataset</h2>
+    <p>The released dataset contains 25 styles × 400 images: 10,000 synthetic image–landmark pairs. Styles include caricatures, Pixar-style characters, hand-drawn illustrations and artistic portraits.</p>
+    <dl>
+      <dt><b>Image size</b></dt><dd>256 × 256 pixels.</dd>
+      <dt><b>Annotations</b></dt><dd>68 two-dimensional facial landmarks per image, represented as (x, y) coordinates.</dd>
+      <dt><b>Purpose</b></dt><dd>Training and studying face landmark detection across visual domains using diffusion-generated paired data.</dd>
+    </dl>
+    <p><a href="https://drive.google.com/file/d/1taZfY8_IETJG2DkhXxv7U3JpPEokkBb4/view?usp=sharing">Download the synthetic dataset</a> · <a href="https://github.com/zenonLEE/MDFLD#synthetic-dataset-icassp-2024">Dataset documentation</a>. Please cite the <a href="#bibtex">ICASSP 2024 paper</a> when using the dataset.</p>
+  </section>
+
   <section id="bibtex">
     <h2>BibTeX</h2>
     <div class="bib">
@@ -196,9 +252,23 @@ mdfld video clip.mp4 --out clip.json --vis clip_mdfld.mp4</code></pre>
   booktitle={ICASSP 2024-2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
   pages={6730--6734},
   year={2024},
+  doi={10.1109/ICASSP48485.2024.10446497},
   organization={IEEE}
 }</code></pre>
     </div>
+    <p><a href="citation.bib" download>Download BibTeX</a> · <a href="https://doi.org/10.1109/ICASSP48485.2024.10446497">Published paper</a> · <a href="https://arxiv.org/abs/2401.13191">Open-access preprint</a></p>
+  </section>
+
+  <section id="questions">
+    <h2>Using MDFLD for cartoon face landmarks</h2>
+    <h3>What does MDFLD return for an image or video?</h3>
+    <p>The package returns one face per image or video frame, a face box and 68 landmark coordinates in iBUG 300-W order. With SAM 3.1 enabled, it also fits upper and lower eyelid curves. Video landmarks are smoothed over time. See the <a href="https://github.com/zenonLEE/MDFLD#python-package">output format and options</a>.</p>
+    <h3>Can I detect landmarks without SAM or a CUDA GPU?</h3>
+    <p>Yes, for a single image with a face box supplied by you. Install the base package, then run the landmark model on the CPU with eyelid fitting disabled:</p>
+    <pre><code>pip install "mdfld @ git+https://github.com/zenonLEE/MDFLD"
+mdfld image face.png --box 120,80,620,640 --device cpu --no-eyelids --out face.json</code></pre>
+    <h3>What are the limits of the current cartoon model?</h3>
+    <p>The v2 model has been benchmarked on caricatures and real-face frames with automatic labels; performance on every cartoon or anime style has not been established. Profile views, heavy beards and sketchy drawings remain difficult. Six landmark points per eye can underrepresent very round cartoon eyes. The model is for research use; see the <a href="https://github.com/zenonLEE/MDFLD#limitations">limitations</a> and <a href="https://github.com/zenonLEE/MDFLD#terms-of-use">terms of use</a>.</p>
   </section>
 
   <footer>
