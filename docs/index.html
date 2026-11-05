@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MDFLD: Cartoon Face Landmark Detection | Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model (ICASSP 2024)</title>
-<meta name="description" content="Cartoon face landmark detection: MDFLD finds 68 face landmarks on cartoons, caricatures, paintings and photos, trained with synthetic data from a diffusion model (ICASSP 2024). Code, synthetic dataset, cartoon model v2, eyelid curves and a pip package.">
+<title>MDFLD: Cartoon Face Landmark Detection | ICASSP 2024 Paper &amp; Python Tool</title>
+<meta name="description" content="MDFLD detects 68 facial landmarks in cartoons, caricatures, paintings and photos. ICASSP 2024 paper, Python image/video tool, pretrained models and synthetic data.">
 <link rel="canonical" href="https://zenonlee.github.io/MDFLD/">
 <meta name="google-site-verification" content="hBg1PWsze17kiuWnogLCKJeVhr338-nZvPYjhwT9lzg">
 
@@ -161,7 +161,8 @@
     <p class="venue">MDFLD · Cartoon face landmark detection · ICASSP 2024</p>
     <p class="authors">Yuanming Li · Gwantae Kim · Jeong-gi Kwak · Bon-hwa Ku · Hanseok Ko</p>
     <p class="affil">Korea University</p>
-    <nav class="buttons">
+    <nav class="buttons" aria-label="Paper and tools">
+      <a href="#quick-start">Use MDFLD</a>
       <a href="https://arxiv.org/abs/2401.13191">Paper (arXiv)</a>
       <a href="https://doi.org/10.1109/ICASSP48485.2024.10446497">Published paper</a>
       <a href="https://github.com/zenonLEE/MDFLD">Code</a>
@@ -174,8 +175,20 @@
       <img src="assets/teaser.jpg" alt="68 landmarks and eyelid curves on a photo, three paintings and four frames of 3D animation">
       <figcaption>Output of <code>mdfld image</code> with default settings. None of these images was used for training.</figcaption>
     </figure>
-    <p class="tldr">One landmark detector for photos, paintings, caricatures and cartoons, trained with synthetic faces from a diffusion model.</p>
+    <p class="tldr">68 facial landmarks for cartoons, caricatures, paintings and photos. Use the Python image/video tool, or read the ICASSP 2024 paper on diffusion-generated training data.</p>
+    <nav aria-label="On this page"><p><a href="#paper">Paper &amp; results</a> · <a href="#quick-start">Install &amp; run</a> · <a href="#dataset">Dataset</a> · <a href="#output">Output format</a> · <a href="#limitations">Limitations</a></p></nav>
   </header>
+
+  <section id="quick-start">
+    <h2>Detect cartoon face landmarks in images and videos</h2>
+    <p>For automatic face finding and eyelid curves, use Python 3.10–3.12 with a CUDA GPU and install PyTorch 2.4 or newer first. Request <a href="https://huggingface.co/facebook/sam3.1">access to the SAM 3.1 weights</a>, then install and authenticate:</p>
+    <pre><code>pip install "mdfld[sam] @ git+https://github.com/zenonLEE/MDFLD"
+hf auth login
+
+mdfld image face.png --out face.json --vis face_mdfld.png
+mdfld video clip.mp4 --out clip.json --vis clip_mdfld.mp4</code></pre>
+    <p class="note">Already have <code>sam3.1_multiplex.pt</code>? Add <code>--sam-checkpoint /path/to/sam3.1_multiplex.pt</code> to either command instead of authenticating. Without a CUDA GPU, use the <a href="#cpu">single-image CPU example with your own face box</a>. See the <a href="https://github.com/zenonLEE/MDFLD#python-package">Python API and mode options</a> and <a href="#output">output format</a>.</p>
+  </section>
 
   <section id="paper">
     <h2>Overview</h2>
@@ -207,16 +220,7 @@
     </div>
   </section>
 
-  <section>
-    <h2>Quick start</h2>
-    <pre><code>pip install "mdfld[sam] @ git+https://github.com/zenonLEE/MDFLD"
-
-mdfld image face.png --out face.json --vis face_mdfld.png
-mdfld video clip.mp4 --out clip.json --vis clip_mdfld.mp4</code></pre>
-    <p class="note">Python 3.10–3.12 with a CUDA GPU; install PyTorch 2.4 or newer first. SAM 3.1 weights need <a href="https://huggingface.co/facebook/sam3.1">access on Hugging Face</a>. Details in the <a href="https://github.com/zenonLEE/MDFLD#python-package">README</a>.</p>
-  </section>
-
-  <section>
+  <section id="tool-results">
     <h2>Cartoon model v2 on caricatures</h2>
     <p>CariFace test set, 1,560 caricatures. NME in % of the outer eye-corner distance; lower is better.</p>
     <div class="table-wrap">
@@ -261,13 +265,14 @@ mdfld video clip.mp4 --out clip.json --vis clip_mdfld.mp4</code></pre>
 
   <section id="questions">
     <h2>Using MDFLD for cartoon face landmarks</h2>
-    <h3>What does MDFLD return for an image or video?</h3>
-    <p>The package returns one face per image or video frame, a face box and 68 landmark coordinates in iBUG 300-W order. With SAM 3.1 enabled, it also fits upper and lower eyelid curves. Video landmarks are smoothed over time. See the <a href="https://github.com/zenonLEE/MDFLD#python-package">output format and options</a>.</p>
-    <h3>Can I detect landmarks without SAM or a CUDA GPU?</h3>
+    <h3 id="output">What does MDFLD return for an image or video?</h3>
+    <p>The package processes at most one face per image or video frame. Each result has a <code>face_box</code>, 68 <code>landmarks</code> in iBUG 300-W order and optional <code>eyelids</code>. Coordinates are pixels of the upright image. When no face is found, all three fields are <code>null</code>. The image command writes a JSON map from input paths to results; video JSON contains <code>fps</code> and a <code>frames</code> list.</p>
+    <p>Each eye has 60-point <code>upper</code> and <code>lower</code> curves. Its <code>source</code> is <code>sam</code> for accepted SAM curves, <code>landmarks</code> for a fallback through the eye landmarks, or <code>interpolated</code> for video frames between eyelid samples with <code>--every N</code>. Video landmarks are smoothed over time. See the <a href="https://github.com/zenonLEE/MDFLD#python-package">full output and options</a>.</p>
+    <h3 id="cpu">Can I detect landmarks without SAM or a CUDA GPU?</h3>
     <p>Yes, for a single image with a face box supplied by you. Install the base package, then run the landmark model on the CPU with eyelid fitting disabled:</p>
     <pre><code>pip install "mdfld @ git+https://github.com/zenonLEE/MDFLD"
 mdfld image face.png --box 120,80,620,640 --device cpu --no-eyelids --out face.json</code></pre>
-    <h3>What are the limits of the current cartoon model?</h3>
+    <h3 id="limitations">What are the limits of the current cartoon model?</h3>
     <p>The v2 model has been benchmarked on caricatures and real-face frames with automatic labels; performance on every cartoon or anime style has not been established. Profile views, heavy beards and sketchy drawings remain difficult. Six landmark points per eye can underrepresent very round cartoon eyes. The model is for research use; see the <a href="https://github.com/zenonLEE/MDFLD#limitations">limitations</a> and <a href="https://github.com/zenonLEE/MDFLD#terms-of-use">terms of use</a>.</p>
   </section>
 

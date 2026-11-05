@@ -15,7 +15,7 @@ Korea University
 [![Release](https://img.shields.io/github/v/release/zenonLEE/MDFLD?color=2ea44f)](https://github.com/zenonLEE/MDFLD/releases)
 [![Stars](https://img.shields.io/github/stars/zenonLEE/MDFLD?style=social)](https://github.com/zenonLEE/MDFLD)
 
-**[Quick start](#quick-start)** · **[Results](#results)** · **[Eyelid curves](#eyelid-contours-v21)** · **[Dataset](#synthetic-dataset-icassp-2024)** · **[Citation](#citation)**
+**[Use MDFLD](#quick-start)** · **[Paper](#paper-and-later-releases)** · **[Model v2 results](#results)** · **[Eyelid curves](#eyelid-contours-v21)** · **[Dataset](#synthetic-dataset-icassp-2024)** · **[Citation](#citation)**
 
 <img src="docs/assets/teaser.jpg" width="100%" alt="68 landmarks and eyelid curves on a photo, three paintings and four frames of 3D animation">
 
@@ -44,8 +44,11 @@ The **2026 releases** add the cartoon model v2, SAM 3.1 eyelid contours and the 
 
 Python 3.10–3.12 with a CUDA GPU; install PyTorch 2.4 or newer first.
 
+For automatic face finding and eyelid curves, request access to the gated [SAM 3.1 weights](https://huggingface.co/facebook/sam3.1), then authenticate after installation:
+
 ```bash
 pip install "mdfld[sam] @ git+https://github.com/zenonLEE/MDFLD"
+hf auth login
 
 mdfld image face.png --out face.json --vis face_mdfld.png
 mdfld video clip.mp4 --out clip.json --vis clip_mdfld.mp4
@@ -59,7 +62,7 @@ r = m.image("face.png")                          # face box, 68 landmarks, eyeli
 v = m.video("clip.mp4", vis="clip_mdfld.mp4")    # the same for every frame, smoothed over time
 ```
 
-SAM 3.1 weights are gated: request access at [facebook/sam3.1](https://huggingface.co/facebook/sam3.1) and run `hf auth login`, or pass a local `sam3.1_multiplex.pt` with `--sam-checkpoint`.
+If you already have a local `sam3.1_multiplex.pt`, pass it with `--sam-checkpoint` instead of authenticating. Without a CUDA GPU, use a supplied face box and disable eyelids; see the CPU example in [Python package](#python-package).
 
 ## Python package
 
@@ -78,7 +81,7 @@ Times for a 1404 × 1404 image on one NVIDIA RTX PRO 6000; differences on 28 car
 
 - **Install.** Install PyTorch and torchvision for your CUDA version before `mdfld`, so pip does not replace them. The landmark model is cached in `~/.cache/mdfld` (or `$MDFLD_HOME`); `MDFLD_SAM3_CKPT` can point to a local SAM 3.1 checkpoint.
 - **Without SAM or a GPU**, landmarks still work with a given face box: `mdfld image face.png --box 120,80,620,640 --device cpu --no-eyelids --out face.json`.
-- **Output.** One face per image or frame. `landmarks`: 68 points, iBUG 300-W order, pixels of the upright image (EXIF orientation applied); arrays passed to the API are RGB. `eyelids`: `L` and `R` eyes with 60-point `upper` and `lower` curves and a `source`: `sam`, or `landmarks` when SAM found no eye or its curve disagreed with the eye landmarks (then the curves pass through the 6 eye landmarks).
+- **Output.** At most one face per image or frame; when no face is found, `face_box`, `landmarks` and `eyelids` are `null`. `landmarks`: 68 points, iBUG 300-W order, pixels of the upright image (EXIF orientation applied); arrays passed to the API are RGB. `eyelids`: `L` and `R` eyes with 60-point `upper` and `lower` curves and a `source`: `sam`, or `landmarks` when SAM found no eye or its curve disagreed with the eye landmarks (then the curves pass through the 6 eye landmarks). Image CLI JSON maps each input path to its result; video JSON contains `fps` and `frames`.
 - **Landmarks** use three passes: the face box, then twice 1.1 × the previous points' box.
 - **Video.** The face is tracked across frames and each shot is smoothed with a forward–backward [One Euro filter](https://gery.casiez.net/1euro/) (no lag; tune with `--min-cutoff` and `--beta`, or `--no-smooth`). `--every N` runs SAM for the eyelids every N frames and interpolates in between (`source: interpolated`). About 1.2 s per frame with `--mode fast`, 0.5 s with `--every 3`.
 
