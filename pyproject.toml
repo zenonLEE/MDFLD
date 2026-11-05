@@ -30,7 +30,9 @@ sam = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/zenonLEE/MDFLD"
+Homepage = "https://zenonlee.github.io/MDFLD/"
+Repository = "https://github.com/zenonLEE/MDFLD"
+Documentation = "https://github.com/zenonLEE/MDFLD#quick-start"
 Paper = "https://arxiv.org/abs/2401.13191"
 
 [project.scripts]
