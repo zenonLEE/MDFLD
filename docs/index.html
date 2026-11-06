@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MDFLD: Cartoon Face Landmark Detection | Towards Multi-Domain Face Landmark Detection with Synthetic Data from Diffusion Model (ICASSP 2024)</title>
-<meta name="description" content="Cartoon face landmark detection: MDFLD finds 68 face landmarks on cartoons, caricatures, paintings and photos, trained with synthetic data from a diffusion model (ICASSP 2024). Code, synthetic dataset, cartoon model v2, eyelid curves and a pip package.">
+<meta name="description" content="Cartoon face landmark detection: MDFLD finds 68 face landmarks on cartoons, caricatures, paintings and photos, trained with synthetic data from a diffusion model (ICASSP 2024). Code, synthetic dataset, cartoon model v3 with DINOv3 features, eyelid curves and a pip package.">
 <link rel="canonical" href="https://zenonlee.github.io/MDFLD/">
 <meta name="google-site-verification" content="hBg1PWsze17kiuWnogLCKJeVhr338-nZvPYjhwT9lzg">
 
@@ -135,13 +135,13 @@
       <a href="https://arxiv.org/abs/2401.13191">Paper (arXiv)</a>
       <a href="https://github.com/zenonLEE/MDFLD">Code</a>
       <a href="https://drive.google.com/file/d/1taZfY8_IETJG2DkhXxv7U3JpPEokkBb4/view?usp=sharing">Dataset</a>
-      <a href="https://github.com/zenonLEE/MDFLD/releases/tag/v2.0">Model v2</a>
+      <a href="https://github.com/zenonLEE/MDFLD/releases/tag/v3.0">Model v3</a>
       <a href="https://huggingface.co/zenonlee/MDFLD">Hugging Face</a>
       <a href="#bibtex">BibTeX</a>
     </nav>
     <figure>
       <img src="assets/teaser.jpg" alt="68 landmarks and eyelid curves on a photo, three paintings and four frames of 3D animation">
-      <figcaption>Output of <code>mdfld image</code> with default settings. None of these images was used for training.</figcaption>
+      <figcaption>Output of <code>mdfld image</code> with the v2 model. None of these images was used to train v2.</figcaption>
     </figure>
     <p class="tldr">One landmark detector for photos, paintings, caricatures and cartoons, trained with synthetic faces from a diffusion model.</p>
   </header>
@@ -156,8 +156,8 @@
     <h2>What is in the repository</h2>
     <div class="cards">
       <div class="card"><b>Synthetic dataset</b><p>25 styles × 400 images at 256 × 256 with 68 landmarks: caricatures, Pixar-style characters, hand-drawn illustrations, artistic portraits and more.</p></div>
-      <div class="card"><b>Cartoon model v2</b><p>Fine-tuned with self-training on cartoon and caricature faces. More accurate than the paper model on the CariFace caricature test set.</p></div>
-      <div class="card"><b>Eyelid curves</b><p>Smooth upper and lower eyelid curves without the lash band, from v2 landmarks and SAM 3.1 text prompts.</p></div>
+      <div class="card"><b>Cartoon model v3</b><p>The v2 network plus frozen DINOv3 features, trained with more cartoon data. About half the failures of v2 on caricatures. v2 stays available as the smaller, faster model.</p></div>
+      <div class="card"><b>Eyelid curves</b><p>Smooth upper and lower eyelid curves without the lash band, from the landmarks and SAM 3.1 text prompts.</p></div>
       <div class="card"><b>pip package</b><p>An <code>mdfld</code> command and Python API for images and videos, with automatic face finding and temporal smoothing.</p></div>
     </div>
   </section>
@@ -172,18 +172,19 @@ mdfld video clip.mp4 --out clip.json --vis clip_mdfld.mp4</code></pre>
   </section>
 
   <section>
-    <h2>Cartoon model v2 on caricatures</h2>
+    <h2>Cartoon models on caricatures</h2>
     <p>CariFace test set, 1,560 caricatures. NME in % of the outer eye-corner distance; lower is better.</p>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Model</th><th>All 68</th><th>Eyes</th><th>Mouth</th><th>Nose</th><th>Eyebrows</th><th>Jaw</th></tr></thead>
         <tbody>
           <tr><td>v1 (paper)</td><td>6.70</td><td>3.49</td><td>6.29</td><td>4.81</td><td>6.77</td><td>10.42</td></tr>
-          <tr><td><b>v2</b></td><td><b>5.03</b></td><td><b>2.78</b></td><td><b>4.62</b></td><td><b>3.80</b></td><td><b>5.01</b></td><td><b>7.75</b></td></tr>
+          <tr><td>v2</td><td>5.03</td><td>2.78</td><td>4.62</td><td>3.80</td><td>5.01</td><td>7.75</td></tr>
+          <tr><td><b>v3</b></td><td><b>4.64</b></td><td><b>2.59</b></td><td><b>4.26</b></td><td><b>3.58</b></td><td><b>4.54</b></td><td><b>7.14</b></td></tr>
         </tbody>
       </table>
     </div>
-    <p class="note">Both models with the crops of the <code>mdfld</code> package. On 313 held-out real-face video frames (automatic labels), v2 reaches 1.74% (v1: 3.03%). See the <a href="https://github.com/zenonLEE/MDFLD#cartoon-model-v2">README</a> for other crops, the protocol and the limitations.</p>
+    <p class="note">All models with the crops of the <code>mdfld</code> package. On 313 held-out real-face video frames (automatic labels): v1 3.03%, v2 1.74%, v3 1.69% (better eyes and mouth, slightly worse jaw). See the <a href="https://github.com/zenonLEE/MDFLD#cartoon-model-v3">README</a> for anime results, speed, the protocol and the limitations.</p>
   </section>
 
   <section id="bibtex">

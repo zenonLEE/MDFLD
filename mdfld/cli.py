@@ -15,7 +15,8 @@ def _common(p):
                    help='eyelid speed / fidelity: best = the v2.1 setup (slowest), default, fast')
     p.add_argument('--no-eyelids', action='store_true', help='landmarks only')
     p.add_argument('--device', help='e.g. cuda, cuda:1 or cpu (default: cuda if available); SAM needs a CUDA device')
-    p.add_argument('--landmark-checkpoint', help='landmark model, TorchScript (default: MDFLD v2, downloaded on first use)')
+    p.add_argument('--model', default='v3', choices=['v3', 'v2'], help='landmark model: v3 (default, more accurate) or v2 (smaller, faster)')
+    p.add_argument('--landmark-checkpoint', help='landmark model file, TorchScript (default: the --model file, downloaded on first use)')
     p.add_argument('--sam-checkpoint', help='sam3.1_multiplex.pt (default: Hugging Face facebook/sam3.1, gated)')
 
 
@@ -38,7 +39,8 @@ def main(argv=None):
         ap.error('--every must be at least 1')
 
     from .pipeline import MDFLD, draw
-    m = MDFLD(mode=a.mode, eyelids=not a.no_eyelids, device=a.device, landmark_checkpoint=a.landmark_checkpoint, sam_checkpoint=a.sam_checkpoint)
+    m = MDFLD(mode=a.mode, eyelids=not a.no_eyelids, device=a.device, landmark_checkpoint=a.landmark_checkpoint, sam_checkpoint=a.sam_checkpoint,
+              model=a.model)
     if a.cmd == 'image':
         box = tuple(float(v) for v in a.box.split(',')) if a.box else None
         if box and len(a.inputs) > 1:

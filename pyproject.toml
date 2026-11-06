@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mdfld"
-version = "2.0.0"
+version = "3.0.0"
 description = "Multi-domain face landmarks (68 points) and lash-free eyelid curves for images and videos (MDFLD, ICASSP 2024)"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"   # sam3 @ f1647e8 pins numpy<2, which has no wheels for Python 3.13+

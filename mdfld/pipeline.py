@@ -85,11 +85,11 @@ class MDFLD:
     v = m.video("clip.mp4")          # {"fps", "frames": [...]}, smoothed over time
     """
 
-    def __init__(self, mode='default', eyelids=True, device=None, landmark_checkpoint=None, sam_checkpoint=None):
+    def __init__(self, mode='default', eyelids=True, device=None, landmark_checkpoint=None, sam_checkpoint=None, model=None):
         if mode not in MODES:
             raise ValueError(f'mode must be one of {list(MODES)}')
         self.mode, self.with_eyelids, self.sam_checkpoint = mode, eyelids, sam_checkpoint
-        self.landmarker = Landmarker(landmark_checkpoint, device)
+        self.landmarker = Landmarker(landmark_checkpoint, device, model)       # model: "v3" (default) or "v2"
         self.device = self.landmarker.device
         self.backend, self.jitters = MODES[mode]
         self._finder = self._eyes = None
