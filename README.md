@@ -19,14 +19,15 @@ Korea University
 
 <img src="docs/assets/teaser.jpg" width="100%" alt="68 landmarks and eyelid curves on a photo, three paintings and four frames of 3D animation">
 
-<sub>Output of <code>mdfld image</code> with default settings; under each face, a zoom of the eyes. None of these images was used for training. <a href="#acknowledgements">Image credits</a>.</sub>
+<sub>Output of <code>mdfld image</code> with the v2 model; under each face, a zoom of the eyes. None of these images was used to train v2. <a href="#acknowledgements">Image credits</a>.</sub>
 
 </div>
 
-MDFLD is a 68-point face landmark detector for cartoons, caricatures, paintings and photos, trained with synthetic faces from a diffusion model. It comes as a pip package for images and videos.
+MDFLD is a 68-point face landmark detector for cartoons, caricatures, paintings and photos, trained with synthetic faces from a diffusion model. The latest model, v3, adds frozen DINOv3 features. It comes as a pip package for images and videos.
 
 ## News
 
+- **2026-11 · Cartoon model v3**: the v2 network plus frozen DINOv3 features; about half the failures of v2 on caricatures and lower errors on our anime tests (no ground truth there). See [Cartoon model v3](#cartoon-model-v3).
 - **2026-11 · pip package** for images and videos. See [Quick start](#quick-start).
 - **2026-11 · Eyelid contours (v2.1)**: smooth eyelid curves without the lash band. See [Eyelid contours](#eyelid-contours-v21).
 - **2026-11 · Cartoon model v2**: more accurate than the paper model. See [Cartoon model v2](#cartoon-model-v2).
@@ -53,9 +54,11 @@ v = m.video("clip.mp4", vis="clip_mdfld.mp4")    # the same for every frame, smo
 
 SAM 3.1 weights are gated: request access at [facebook/sam3.1](https://huggingface.co/facebook/sam3.1) and run `hf auth login`, or pass a local `sam3.1_multiplex.pt` with `--sam-checkpoint`.
 
+The first run downloads the v3 landmark model (419 MB). Add `--model v2` (Python: `MDFLD(model="v2")`) for the smaller, faster v2 model (69 MB).
+
 ## Python package
 
-The package finds the face with SAM 3.1, predicts 68 landmarks with the v2 model (TorchScript, downloaded on first use) and fits eyelid curves.
+The package finds the face with SAM 3.1, predicts 68 landmarks with the v3 model (TorchScript, downloaded on first use; `--model v2` for v2) and fits eyelid curves.
 
 | Mode | Eyelid step | Time per image | Difference from `best` |
 |---|---|---|---|
@@ -63,24 +66,96 @@ The package finds the face with SAM 3.1, predicts 68 landmarks with the v2 model
 | `default` | SAM image API, 5 crops per eye | ~2.5 s | median 0.9 px |
 | `fast` | SAM image API, 3 crops per eye | ~1.9 s | median 1.1 px |
 
-Times for a 1404 × 1404 image on one NVIDIA RTX PRO 6000; differences on 28 cartoon eyes.
+Times for a 1404 × 1404 image on one NVIDIA RTX PRO 6000 and differences on 28 cartoon eyes, both measured with the v2 landmark model; v3 adds about 33 ms per face (measured on an RTX 4090 D).
 
 <details>
 <summary>Details</summary>
 
 - **Install.** Install PyTorch and torchvision for your CUDA version before `mdfld`, so pip does not replace them. The landmark model is cached in `~/.cache/mdfld` (or `$MDFLD_HOME`); `MDFLD_SAM3_CKPT` can point to a local SAM 3.1 checkpoint.
-- **Without SAM or a GPU**, landmarks still work with a given face box: `mdfld image face.png --box 120,80,620,640 --no-eyelids`.
+- **Without SAM or a GPU**, landmarks still work with a given face box: `mdfld image face.png --box 120,80,620,640 --no-eyelids`. On 8 CPU threads, v3 takes about 1.8 s per face and v2 about 0.4 s.
 - **Output.** One face per image or frame. `landmarks`: 68 points, iBUG 300-W order, pixels of the upright image (EXIF orientation applied); arrays passed to the API are RGB. `eyelids`: `L` and `R` eyes with 60-point `upper` and `lower` curves and a `source`: `sam`, or `landmarks` when SAM found no eye or its curve disagreed with the eye landmarks (then the curves pass through the 6 eye landmarks).
-- **Landmarks** use three passes: the face box, then twice 1.1 × the previous points' box.
+- **Landmarks** use three passes: the face box, then twice 1.1 × the previous points' box. On a GPU the first call takes about 1 s; for long runs, `MDFLD_JIT_FUSION=1` turns on PyTorch's TorchScript fusion (faster per face, but the first call then takes 20–30 s).
 - **Video.** The face is tracked across frames and each shot is smoothed with a forward–backward [One Euro filter](https://gery.casiez.net/1euro/) (no lag; tune with `--min-cutoff` and `--beta`, or `--no-smooth`). `--every N` runs SAM for the eyelids every N frames and interpolates in between (`source: interpolated`). About 1.2 s per frame with `--mode fast`, 0.5 s with `--every 3`.
 
 </details>
 
-## Cartoon model v2
+## Cartoon model v3
 
-The paper model (v1) fine-tuned with self-training on cartoon and caricature faces. Download from the [v2.0 release](https://github.com/zenonLEE/MDFLD/releases/tag/v2.0): `mdfld_cartoon_v2.torchscript.pt` (used by the package; also on [Hugging Face](https://huggingface.co/zenonlee/MDFLD)) or `mdfld_cartoon_v2.pkl` (for the [original code](#paper-model-v1-and-the-original-code)).
+The v2 network with frozen [DINOv3](https://github.com/facebookresearch/dinov3) ViT-B/16 features: four DINOv3 layers (blocks 3, 6, 9 and 12) pass through a small adapter (1.6 M parameters) and are added to the input of the hourglass stack; DINOv3 itself is not trained. It is trained with more cartoon data than v2 and distilled from the same design with DINOv3 ViT-L/16. Download from the [v3.0 release](https://github.com/zenonLEE/MDFLD/releases/tag/v3.0): `mdfld_cartoon_v3.torchscript.pt` (419 MB, used by the package; distributed under the [DINOv3 License](LICENSE_DINOv3.md)).
 
 ### Results
+
+CariFace test set (1,560 caricatures), NME in % of the outer eye-corner distance; eye failure = eye NME above 10%. All models with the package's three-pass crop.
+
+| Model | All 68 | Eyes | Mouth | Nose | Eyebrows | Jaw | Eye failures |
+|---|---|---|---|---|---|---|---|
+| v1 (paper) | 6.70 | 3.49 | 6.29 | 4.81 | 6.77 | 10.42 | 2.6% |
+| v2 | 5.03 | 2.78 | 4.62 | 3.80 | 5.01 | 7.75 | 0.9% |
+| **v3** | **4.64** | **2.59** | **4.26** | **3.58** | **4.54** | **7.14** | **0.4%** |
+
+| Test set | Labels | Metric | v2 | v3 |
+|---|---|---|---|---|
+| CariFace test (1,560 caricatures) | ground truth | faces with NME above 10% | 3.6% | **2.0%** |
+| Real faces (313 held-out video frames) | automatic | NME | 1.74 | **1.69** |
+| Synthetic anime (1,462 held-out generated faces) | generation layout | NME | 6.30 | **5.09** |
+| Anime illustrations (980 held-out images) | none | disagreement above 15% with an anime face detector | 10.5% | **6.1%** |
+
+| Model | File | GPU, per face | CPU (8 threads), per face |
+|---|---|---|---|
+| v2 | 69 MB | 38 ms | 0.4 s |
+| v3 | 419 MB | 71 ms | 1.8 s |
+
+<details>
+<summary>Protocol</summary>
+
+- Crops as in the package (three passes: the box of the ground-truth points or the face box, then twice 1.1 × the previous points' box); fp32. Times: package defaults, one face at a time, including cropping, on one RTX 4090 D (after the first call) and 8 CPU threads.
+- Synthetic anime: faces generated like the synthetic training faces (below) but with other seeds, kept only when the anime face detector agrees with the layout; the label is the 68-point layout given to the generator, so it is approximate.
+- Anime illustrations: held-out images of [anime-faces-256](https://huggingface.co/datasets/puruchinera/anime-faces-256), without exact duplicates of training images. No ground truth: the score compares 11 points (eye corners, eyelid middles, mouth corners, chin; averaged per group) with [anime-face-detector](https://github.com/hysts/anime-face-detector), normalised by its outer eye-corner distance. That detector also filtered the anime pseudo-labels, so this score favours models trained on them.
+- No test image was used for training, but these test sets were used to choose v3 among several variants and to tune the pseudo-labelling.
+- On real faces v3 is better on the eyes (0.96 vs 1.12) and mouth (1.01 vs 1.24) but slightly worse on the jaw (3.60 vs 3.31).
+
+</details>
+
+### Training
+
+<details>
+<summary>Recipe and data</summary>
+
+5,000 iterations, batch 48, Adam (lr 6e-5 for the hourglass, 6e-4 for the adapter; warm-up, cosine decay), EMA 0.998. Augmentation as for v2, plus rotations up to ±60° (10% of the crops) and synthetic occluders over the eyes (25%). Loss as for v2, plus distillation from the DINOv3 ViT-L/16 version of the same design (its landmarks, heatmaps and the features of each hourglass stack). The hourglass starts from an intermediate model (the paper model fine-tuned on similar data); the adapter starts from a probe trained on the frozen DINOv3 features.
+
+| Data | Style | Faces | Labels | Share |
+|---|---|---|---|---|
+| [CariFace](https://github.com/Juyong/CaricatureFace) (train split) | caricatures | 5,940 | ground truth | 33% |
+| Synthetic anime faces (Stable Diffusion 1.5 anime checkpoints + ControlNet OpenPose-face) | anime | 19,851 | generation layout | 25% |
+| [anime-faces-256](https://huggingface.co/datasets/puruchinera/anime-faces-256) | anime | 24,850 | pseudo, kept where an earlier model agrees with [anime-face-detector](https://github.com/hysts/anime-face-detector) | 12% |
+| [iCartoonFace](https://github.com/luxiangju-PersonAI/iCartoonFace) | 2D animation | 7,838 | pseudo | 12% |
+| [Cartoon Set](https://google.github.io/cartoonset/) (Google, CC BY 4.0) | flat avatars | 4,610 | pseudo | 3% |
+| [pixar-images](https://huggingface.co/datasets/lavaman131/pixar-images) | 3D animation | 96 | pseudo | 2% |
+| Blender Studio open movies (*Charge*, *Glass Half*, *Sintel*, *Sprite Fright*; CC BY) | 3D animation | 370 | pseudo | 5% |
+| In-house video frames | real faces | 416 | automatic | 8% |
+
+Pseudo-labels come from earlier models (flip-averaged, filtered by flip agreement and eye shape); their jaw points get a low or zero weight. The synthetic anime faces are generated from 68-point layouts (training labels made more anime-like) and kept when an earlier model or the anime face detector agrees with the layout. If you publish results obtained with v3, the DINOv3 License requires acknowledging DINOv3 (Siméoni et al., 2025); please also cite CariFace (Cai et al., Graphical Models 2021) and iCartoonFace (Zheng et al., ACM MM 2020).
+
+</details>
+
+### Limitations
+
+- Ground truth only on caricatures; real faces and anime are measured with automatic labels, generation layouts or another detector.
+- On real faces the jaw is slightly less accurate than with v2 (3.60 vs 3.31 NME, automatic labels).
+- Faces should be roughly upright; rotate strongly tilted images first.
+- Six points per eye: very round cartoon eyes get an almond shape (the eyelid curves help).
+- Non-human characters, profile views and covered eyes are still hard.
+- 6 × the file size of v2 and about 2 × (GPU) to 4.6 × (CPU) slower; use `--model v2` when speed matters.
+
+## Terms of use
+
+Research use only, without warranty. The training data includes research-only (CariFace) and third-party cartoon material; please follow each dataset's terms. The v3 model file contains DINOv3 weights and is distributed under the [DINOv3 License](LICENSE_DINOv3.md) (a copy accompanies the release), including its trade-control restrictions; the research-use terms above apply in addition.
+
+## Cartoon model v2
+
+The paper model (v1) fine-tuned with self-training on cartoon and caricature faces; smaller and faster than v3. Download from the [v2.0 release](https://github.com/zenonLEE/MDFLD/releases/tag/v2.0): `mdfld_cartoon_v2.torchscript.pt` (used by the package; also on [Hugging Face](https://huggingface.co/zenonlee/MDFLD)) or `mdfld_cartoon_v2.pkl` (for the [original code](#paper-model-v1-and-the-original-code)).
+
+### Results (v2)
 
 CariFace test set (1,560 caricatures), NME in % of the outer eye-corner distance; eye failure = eye NME above 10%.
 
@@ -108,7 +183,7 @@ On 313 held-out real-face video frames (automatic labels), v2 reaches 1.74% (v1:
 
 </details>
 
-### Training
+### Training (v2)
 
 <details>
 <summary>Recipe and data</summary>
@@ -128,19 +203,15 @@ The architecture is STAR's `StackedHGNetV1` (68 points, 256 × 256 input), uncha
 
 </details>
 
-### Limitations
+### Limitations (v2)
 
 - Benchmarked on caricatures and (with automatic labels) real faces only.
 - Six points per eye: very round cartoon eyes get an almond shape (the eyelid curves help).
 - Profile views, heavy beards and sketchy drawings are hard.
 
-### Terms of use
-
-Research use only, without warranty. The training data includes research-only (CariFace) and third-party cartoon material; please follow each dataset's terms.
-
 ## Eyelid contours (v2.1)
 
-Dense upper and lower eyelid curves without the lash band, computed from the v2 landmarks with SAM 3.1. No training needed. The pip package runs this step and falls back to the landmark curves when SAM's curve disagrees with the landmarks (for example on oil paintings with dark eye whites, or eyes behind glasses).
+Dense upper and lower eyelid curves without the lash band, computed from the 68 landmarks (v3 by default in the package) with SAM 3.1. No training needed. The pip package runs this step and falls back to the landmark curves when SAM's curve disagrees with the landmarks (for example on oil paintings with dark eye whites, or eyes behind glasses).
 
 <details>
 <summary>Stand-alone script</summary>
@@ -205,4 +276,4 @@ For 68-point models, use any `--data_definition` except `WFLW` and `COFW`, which
 
 ## Acknowledgements
 
-The network follows [STAR](https://github.com/ZhenglinZhou/STAR); eyelids and face finding use [SAM 3.1](https://github.com/facebookresearch/sam3) (SAM License). Figure images: public-domain works from Wikimedia Commons ([Mae Jemison](https://commons.wikimedia.org/wiki/File:Mae_Carol_Jemison.jpg), [Mona Lisa](https://commons.wikimedia.org/wiki/File:Mona_Lisa,_by_Leonardo_da_Vinci,_from_C2RMF_retouched.jpg), [van Gogh](https://commons.wikimedia.org/wiki/File:Vincent_van_Gogh_-_Self-Portrait_-_Google_Art_Project_(454045).jpg), [Vermeer](https://commons.wikimedia.org/wiki/File:Johannes_Vermeer_(1632-1675)_-_The_Girl_With_The_Pearl_Earring_(1665).jpg)) and frames of *Sintel* (© Blender Foundation | [durian.blender.org](https://durian.blender.org), CC BY 3.0).
+The network follows [STAR](https://github.com/ZhenglinZhou/STAR); v3 uses [DINOv3](https://github.com/facebookresearch/dinov3) (DINOv3 License) features; eyelids and face finding use [SAM 3.1](https://github.com/facebookresearch/sam3) (SAM License). Figure images: public-domain works from Wikimedia Commons ([Mae Jemison](https://commons.wikimedia.org/wiki/File:Mae_Carol_Jemison.jpg), [Mona Lisa](https://commons.wikimedia.org/wiki/File:Mona_Lisa,_by_Leonardo_da_Vinci,_from_C2RMF_retouched.jpg), [van Gogh](https://commons.wikimedia.org/wiki/File:Vincent_van_Gogh_-_Self-Portrait_-_Google_Art_Project_(454045).jpg), [Vermeer](https://commons.wikimedia.org/wiki/File:Johannes_Vermeer_(1632-1675)_-_The_Girl_With_The_Pearl_Earring_(1665).jpg)) and frames of *Sintel* (© Blender Foundation | [durian.blender.org](https://durian.blender.org), CC BY 3.0).

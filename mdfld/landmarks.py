@@ -1,7 +1,12 @@
-"""68-point landmarks with the MDFLD v2 model (iBUG 300-W layout, 0-based).
+"""68-point landmarks with the MDFLD models (iBUG 300-W layout, 0-based).
 
-The model is a TorchScript file (network and weights together), so no network code is needed to run it.
+The models are TorchScript files (network and weights together), so no network code is needed to run them.
+v3 (default): the v2 network plus frozen DINOv3 ViT-B/16 features; more accurate, larger and slower.
+v2: the smaller, faster model.
 """
+import contextlib
+import os
+
 import cv2
 import numpy as np
 import torch
@@ -40,18 +45,19 @@ def to_bgr(image):
 class Landmarker:
     """MDFLD landmark model.
 
-    lm = Landmarker()
+    lm = Landmarker()                       # model="v3" (default) or "v2"
     points = lm(image, face_box)            # (68, 2) array in image pixels
     """
 
-    def __init__(self, checkpoint=None, device=None):
+    def __init__(self, checkpoint=None, device=None, model=None):
         self.device = str(device or ('cuda' if torch.cuda.is_available() else 'cpu'))
-        path = weights.mdfld_v2(checkpoint)
+        self.model = model or weights.DEFAULT_MODEL
+        path = weights.landmark_model(self.model, checkpoint)
         try:
             self.net = torch.jit.load(str(path), map_location=self.device).eval()
         except RuntimeError as ex:
-            raise RuntimeError(f'{path} is not a TorchScript model. The package uses mdfld_cartoon_v2.torchscript.pt '
-                               '(downloaded automatically); the .pkl checkpoints need the training code.') from ex
+            raise RuntimeError(f'{path} is not a TorchScript model. The package uses mdfld_cartoon_v3.torchscript.pt or '
+                               'mdfld_cartoon_v2.torchscript.pt (downloaded automatically); the .pkl checkpoints need the training code.') from ex
 
     @torch.no_grad()
     def predict_boxes(self, image_bgr, boxes, k=1.1):
@@ -61,7 +67,10 @@ class Landmarker:
             M = _crop_matrix(k * max(x1 - x0, y1 - y0, 1.0), (x0 + x1) / 2, (y0 + y1) / 2)
             crops.append(cv2.warpPerspective(image_bgr, M, dsize=(SIZE, SIZE), flags=cv2.INTER_LINEAR, borderValue=0)); mats.append(M)
         x = torch.from_numpy(np.ascontiguousarray(np.stack(crops))).to(self.device).float().permute(0, 3, 1, 2) / 255.0 * 2.0 - 1.0
-        with torch.autocast(device_type=x.device.type, enabled=False):
+        # By default no TorchScript fusers: with them the first call on a GPU spends 20-30 s optimising the graph; without them
+        # it takes about 1 s, and later calls are 1.3-1.7 x slower. MDFLD_JIT_FUSION=1 keeps PyTorch's fusers (for long runs).
+        fusers = contextlib.nullcontext() if os.environ.get('MDFLD_JIT_FUSION') == '1' else torch.jit.fuser('none')
+        with torch.autocast(device_type=x.device.type, enabled=False), fusers:
             out = self.net(x).float().cpu().numpy()
         p = ((out + 1) * SIZE - 1) / 2
         res = np.empty_like(p)
