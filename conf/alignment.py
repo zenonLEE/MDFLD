@@ -217,6 +217,11 @@ class Alignment(Base):
                 [48, 54], [49, 53], [50, 52], [61, 63], [60, 64], [67, 65], [58, 56], [59, 55],
             )
             self.image_dir = osp.join(self.image_dir, '')
+        # Image-only inference takes a file or directory directly, without a
+        # benchmark-specific subdirectory or a trailing slash on image files.
+        if getattr(args, 'mode', None) == 'test_image':
+            self.image_dir = osp.normpath(args.image_dir)
+
         self.label_num = self.nstack * 3 if self.use_AAM else self.nstack
         self.loss_weights, self.criterions, self.metrics = [], [], []
         for i in range(self.nstack):

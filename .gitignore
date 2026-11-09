@@ -10,7 +10,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -36,7 +35,7 @@ MANIFEST
 Thumbs.db
 
 # Data and Models
-dataset/
+/dataset/
 pretrained_model/
 video_me/
 *.mp4
@@ -66,4 +65,4 @@ logs/
 *.rar
 
 # Jupyter Notebook
-.ipynb_checkpoints 
+.ipynb_checkpoints/

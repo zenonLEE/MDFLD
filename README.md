@@ -244,20 +244,46 @@ The paper trains a landmark-conditioned diffusion model on real faces, adapts it
 
 ```bash
 git clone https://github.com/zenonLEE/MDFLD.git && cd MDFLD
-pip install -r requirements.txt
+# In a separate Python 3.10 environment, install matching torch/torchvision
+# builds for your platform first. This CPU pair was used for the smoke tests:
+python -m pip install torch==2.2.0 torchvision==0.17.0 --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -r requirements-legacy-inference.txt
 ```
 
+The repository includes the original MDFLD-specific `lib/` sources required by
+`test.py`; no separate package named `lib` is needed. The legacy inference path
+was checked on CPU with Python 3.10.12, PyTorch 2.2.0, torchvision 0.17.0 and
+NumPy 1.26.4. `requirements.txt` retains the historical training environment.
+
 Models: [`mdfld_cartoon_v2.pkl`](https://github.com/zenonLEE/MDFLD/releases/download/v2.0/mdfld_cartoon_v2.pkl) (SHA-256 `f061f616…9d65e`), or the paper model v1, [`best_model.zip`](https://drive.google.com/file/d/1OjZDqkt41HAqAE5mJ586KMj8BUEHC6zn/view?usp=drive_link) (place `best_model.pkl` at `./pretrained_model/cartoon_dataset_400_v2/starv2_smoothl1/model/best_model.pkl`, the default).
+
+Use the project's model links or another trusted `.pkl` checkpoint: this legacy
+format uses Python pickle to load training metadata as well as network weights.
 
 ```bash
 # with annotations (<annot_dir>/<data_definition>/test.tsv)
 python test.py --mode=test --device_ids=0 --image_dir=/path/to/images --annot_dir=/path/to/annotations \
                --data_definition=CariFace_testset --pretrained_weight=/path/to/model.pkl
-# images only
-python test.py --mode=test_image --device_ids=0 --image_dir=/path/to/images --pretrained_weight=/path/to/model.pkl
+# one image, without annotations (CPU; use --device_ids=0 for CUDA)
+python test.py --mode=test_image --device_ids=-1 --image_dir=/path/to/face.jpg \
+               --pretrained_weight=/path/to/model.pkl --output_dir=./results
+# a directory of images, including subdirectories
+python test.py --mode=test_image --device_ids=-1 --image_dir=/path/to/images \
+               --pretrained_weight=/path/to/model.pkl --output_dir=./results
 ```
 
+Image-only inputs should already be face crops: this legacy script resizes the
+whole image to 256 × 256 and does not run a face detector. Each input produces an
+overlay image and a `<filename>.npy` file (for example `face.jpg.npy`) with an
+`N × 2` array in the resized image's pixel coordinates (68 points for the MDFLD
+models). Output subdirectories follow the input directory; input images are
+kept unchanged. Without `--output_dir`, results go to
+`pretrained_model/<data_definition>/image_results/`.
+
 For 68-point models, use any `--data_definition` except `WFLW` and `COFW`, which build 98- and 29-point networks.
+
+The focused legacy-inference regression tests can be run with
+`python -m unittest discover -s tests -p test_legacy_inference.py -v`.
 
 </details>
 

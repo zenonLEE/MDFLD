@@ -1,6 +1,4 @@
 import argparse
-from trainer import train
-from tester import test, test_img_only
 import os
 
 
@@ -11,13 +9,14 @@ def add_data_options(parser):
 
     '''
     group = parser.add_argument_group("dataset")
-    group.add_argument("--image_dir", type=str, default='./dataset/001/0.9_slamdunk/', help="the directory of image")
+    group.add_argument("--image_dir", type=str, default='./dataset/001/0.9_slamdunk/', help="an image file or directory of face crops (test_image mode)")
     group.add_argument("--annot_dir", type=str, default='./dataset/meta', help="the directory of annot")
+    group.add_argument("--output_dir", type=str, default=None, help="test_image outputs (default: pretrained_model/<data_definition>/image_results); inputs are kept unchanged")
 
 
 def add_base_options(parser):
     group = parser.add_argument_group("base")
-    group.add_argument("--mode", type=str, default="test_image", help="train or test or test_image") # test_image mode need to set image_dir
+    group.add_argument("--mode", type=str, default="test_image", choices=("train", "test", "test_image"), help="train or test or test_image") # test_image mode need to set image_dir
     group.add_argument("--config_name", type=str, default="alignment", help="set configure file name")
     group.add_argument('--device_ids', type=str, default="0",
                        help="set device ids, -1 means use cpu device, >= 0 means use gpu device")
@@ -71,10 +70,13 @@ if __name__ == "__main__":
             args.mode, args.config_name, args.pretrained_weight, args.image_dir, args.annot_dir, args.device_ids))
     args.device_ids = list(map(int, args.device_ids.split(",")))
     if args.mode == "train":
+        from trainer import train
         train(args)
     elif args.mode == "test":
+        from tester import test
         test(args)
     elif args.mode == 'test_image':
+        from tester import test_img_only
         test_img_only(args)
 
     else:

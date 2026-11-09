@@ -1,6 +1,18 @@
 import os
+import inspect
 import torch
 from lib import utility
+
+
+def _load_checkpoint(net, config, args):
+    model_path = args.pretrained_weight or os.path.join(config.model_dir, "best_model.pkl")
+    load_options = {"map_location": config.device}
+    # Original training checkpoints include non-tensor metadata (e.g. Counter).
+    # Preserve the legacy loader on new PyTorch; use only trusted .pkl files.
+    if "weights_only" in inspect.signature(torch.load).parameters:
+        load_options["weights_only"] = False
+    checkpoint = torch.load(model_path, **load_options)
+    net.load_state_dict(checkpoint["net"])
 
 
 def test(args):
@@ -19,13 +31,7 @@ def test(args):
 
     # model
     net = utility.get_net(config)
-    model_path = os.path.join(config.model_dir,  "bast_model.pkl") if args.pretrained_weight is None else args.pretrained_weight
-    if args.device_ids == [-1]:
-        checkpoint = torch.load(model_path, map_location="cpu")
-    else:
-        checkpoint = torch.load(model_path, map_location='cuda:0')
-
-    net.load_state_dict(checkpoint["net"])
+    _load_checkpoint(net, config, args)
 
     if config.logger is not None:
         config.logger.info("Loaded network")
@@ -63,28 +69,22 @@ def test_img_only(args):
         config.logger.info("Loaded configure file %s: %s" % (args.config_name, config.id))
         config.logger.info("\n" + "\n".join(["%s: %s" % item for item in config.__dict__.items()]))
 
+    # Validate the image input before loading the checkpoint.
+    test_loader = utility.get_dataloader(config, "test_image")
+
     # model
     net = utility.get_net(config)
-    model_path = os.path.join(config.model_dir,  "bast_model.pkl") if args.pretrained_weight is None else args.pretrained_weight
-    if args.device_ids == [-1]:
-        checkpoint = torch.load(model_path, map_location="cpu")
-    else:
-        checkpoint = torch.load(model_path)
-
-    net.load_state_dict(checkpoint["net"])
+    _load_checkpoint(net, config, args)
 
 
     if config.logger is not None:
         config.logger.info("Loaded network")
         # config.logger.info('Net flops: {} G, params: {} MB'.format(flops/1e9, params/1e6))
 
-    # data - test
-    test_loader = utility.get_dataloader(config, "test_image")
-
     if config.logger is not None:
         config.logger.info("Loaded data from {:}".format(config.test_tsv_file))
 
     # inference
-    utility.forward_test_image_only(config, test_loader, net)
+    return utility.forward_test_image_only(config, test_loader, net)
 
 

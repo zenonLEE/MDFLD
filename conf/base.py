@@ -18,6 +18,7 @@ class Base:
         self.ckpt_dir = ckpt_dir
         self.image_dir = image_dir
         self.annot_dir = annot_dir
+        self.output_dir = None
 
         self.loader_type = "alignment"
         self.loss_func = "STARLoss"
